@@ -1,4 +1,3 @@
-
 %% Single Image Haze Removal Using Dark Channel Prior
 
 % I(x) = J(x)t(x) + A(1-t(x))
@@ -13,7 +12,7 @@
 clear all
 clc
 
-I = imread('city.jpg'); % Reading image
+I = imread('tiananmen1.png'); % Reading image
 [xind, yind, z] = size(I); % Saving dimensions of image in xind, yind, z
 
 figure;
@@ -83,66 +82,12 @@ Impr = uint8(Impr);
 figure;
 imshow(Impr);
 
-%% Recovering the Scene Radiance
-% Final scene radiance is J
-% J(x) = (I(x)-A) / max(t(x),t0) + A
-% Here t0 = 0.1
-J = [1]; % Predefining J
-for i = 1:xind
-    for j = 1:yind
-        J(i,j,1) = (I(i,j,1) - mazz(1))/max([t(i,j),0.1])+mazz(1);
-        J(i,j,2) = (I(i,j,2) - mazz(2))/max([t(i,j),0.1])+mazz(2);
-        J(i,j,3) = (I(i,j,3) - mazz(3))/max([t(i,j),0.1])+mazz(3);
-    end
-end
-J = uint8(J); % Converting to uint8 for displaying image
-figure;
-imshow(J);
-
 %% Soft Matting
-A=double(I)./255
-[n_r,n_c,dim]=size(A)
-epsilon=10^-8
-window_size=9
-U=eye(3)
-laplacian_matrix=zeros(n_r,n_c)
-kr_delta=0
-lambda=10^-4
-for k= 2:n_r-1
-    for l=2:n_c-1
-        % In a window
-        asum=0;
-        mu=mean(mean(A(k-1:k+1,l-1:l+1)));
-        sigma=cov(A(k-1:k+1,l-1:l+1));
-        for i=k-1:k+1
-            for j=l-1:l+1
-                if(i==j)
-                    kr_delta=1;
-                else
-                    kr_delta=0;
-                end
-                il=(sigma + (epsilon/window_size)*U);
-                Ii=A(i,l-1:l+1) - mu;
-                Ij=A(k-1:k+1,j) - mu;
-                il1=1+(Ii/il)*Ij;
-                asum=asum+kr_delta-il1/window_size;
-            end
-        end
-        laplacian_matrix(k,l)= asum;
-    end
-end
-Up=eye(size(laplacian_matrix))
-
-tf=((lambda.*t)./(laplacian_matrix+lambda*Up));
-laplacian_matrix = uint8(laplacian_matrix); % Converting to uint8 for displaying image
+% Instead of using soft-matting, we use guided filter
+% since soft-matting is a very slow technique
+img = imguidedfilter(t, I, 'DegreeOfSmoothing', 0.5, 'NeighborhoodSize', [200 200]);
 figure;
-imshow(laplacian_matrix);
-tf1 = uint8(255.*tf); % Converting to uint8 for displaying image
-figure;
-imshow(tf1);
-
-
-
+imshow(img);
 %% Recovering the Scene Radiance
 % Final scene radiance is J
 % J(x) = (I(x)-A) / max(t(x),t0) + A
@@ -150,12 +95,11 @@ imshow(tf1);
 J = [1]; % Predefining J
 for i = 1:xind
     for j = 1:yind
-        J(i,j,1) = (I(i,j,1) - mazz(1))/max([tf(i,j),0.1])+mazz(1);
-        J(i,j,2) = (I(i,j,2) - mazz(2))/max([tf(i,j),0.1])+mazz(2);
-        J(i,j,3) = (I(i,j,3) - mazz(3))/max([tf(i,j),0.1])+mazz(3);
+        J(i,j,1) = (I(i,j,1) - mazz(1))/max([img(i,j),0.1])+mazz(1);
+        J(i,j,2) = (I(i,j,2) - mazz(2))/max([img(i,j),0.1])+mazz(2);
+        J(i,j,3) = (I(i,j,3) - mazz(3))/max([img(i,j),0.1])+mazz(3);
     end
 end
 J = uint8(J); % Converting to uint8 for displaying image
 figure;
 imshow(J);
-
