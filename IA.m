@@ -12,11 +12,11 @@
 clear all
 clc
 
-I = imread('tiananmen1.png'); % Reading image
+I = imread('im13.jpg'); % Reading image
 [xind, yind, z] = size(I); % Saving dimensions of image in xind, yind, z
 
-figure;
-imshow(I);
+%figure;
+%imshow(I);
 
 %% Generating Dark Channel Prior
 % Finding minimum of RGB values of each pixel
@@ -29,8 +29,8 @@ end
 ps = 15;
 A = ordfilt2(Im,1,ones(ps,ps), 'symmetric');
 
-figure;
-imshow(A);
+%figure;
+%imshow(A);
 
 %% Haze Removal Using Dark Channel Prior
 % Estimating the transmission
@@ -79,15 +79,15 @@ t = (1 - w.*Im1);
 Impr = t*255;
 Impr = uint8(Impr);
 
-figure;
-imshow(Impr);
+%figure;
+%imshow(Impr);
 
 %% Soft Matting
 % Instead of using soft-matting, we use guided filter
 % since soft-matting is a very slow technique
 img = imguidedfilter(t, I, 'DegreeOfSmoothing', 0.5, 'NeighborhoodSize', [200 200]);
-figure;
-imshow(img);
+%figure;
+%imshow(img);
 %% Recovering the Scene Radiance
 % Final scene radiance is J
 % J(x) = (I(x)-A) / max(t(x),t0) + A
@@ -100,6 +100,6 @@ for i = 1:xind
         J(i,j,3) = (I(i,j,3) - mazz(3))/max([img(i,j),0.1])+mazz(3);
     end
 end
+I = uint8(I); % Converting to uint8 for displaying image
 J = uint8(J); % Converting to uint8 for displaying image
-figure;
-imshow(J);
+figure, imshowpair(I, J, 'montage');
