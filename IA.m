@@ -103,3 +103,6 @@ end
 I = uint8(I); % Converting to uint8 for displaying image
 J = uint8(J); % Converting to uint8 for displaying image
 figure, imshowpair(I, J, 'montage');
+%%
+dehazed = imreducehaze(I);
+imshow(dehazed);
